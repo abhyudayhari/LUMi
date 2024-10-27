@@ -5,7 +5,7 @@ import { ArrowRight, RefreshCcw, SendIcon } from "lucide-react";
 import { useState } from "react";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const genAI = new GoogleGenerativeAI("AIzaSyCC-9zRe_CNF_E4UKksTjXQ9bVUvtsMrVA");
+const genAI = new GoogleGenerativeAI("YOUR_API_KEY");
 
 const page = () => {
   const [messageData, setMessageData] = useState<any>([]);
