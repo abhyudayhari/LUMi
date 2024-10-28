@@ -11,56 +11,71 @@ const page = () => {
   const [inputMsg, setInputMsg] = useState("");
   const [changed, setChanged] = useState(false);
   const [language, setLanguage] = useState("English");
-  const [isTyping, setIsTyping] = useState(false); // For showing typing animation
+  const [isTyping, setIsTyping] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleEnter = async () => {
-    if (!inputMsg.trim()) return; // Prevent sending empty messages
+    if (!inputMsg.trim()) return;
 
-    // Show user's message immediately
+    // Clear error message and show user's message immediately
+    setErrorMessage("");
     setMessageData((prevData: any) => [
       ...prevData,
       { message: inputMsg, sender: "user" },
     ]);
 
-    setInputMsg(""); // Clear the input field
-
-    // Show typing indicator
+    setInputMsg("");
     setIsTyping(true);
 
-    // Fetch the response
-    const restext = await run(inputMsg);
-
-    // Remove typing indicator and display bot's response
-    setMessageData((prevData: any) => [
-      ...prevData,
-      { message: restext, sender: "agent" },
-    ]);
-    setIsTyping(false);
+    try {
+      const restext = await run(inputMsg);
+      setMessageData((prevData: any) => [
+        ...prevData,
+        { message: restext, sender: "agent" },
+      ]);
+    } catch (error) {
+      setErrorMessage("Failed to fetch response. Please try again.");
+      setMessageData((prevData: any) => [
+        ...prevData,
+        { message: "Failed to fetch response. Please try again.", sender: "agent" },
+      ]);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   async function run(inputMsg: string) {
     const apiUrl = `http://34.19.70.196:5000/api/whatsapp_api/`;
     
     const bodyParams = {
-        booking_id: bookingID,
-        user_input: inputMsg,
-        language: language,
-        streaming: false,
+      booking_id: bookingID,
+      user_input: inputMsg,
+      language: language,
+      streaming: false,
     };
 
-    const response = await fetch(apiUrl, {
+    try {
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
-            'accept': 'application/json',
-            'Content-Type': 'application/json'
+          'accept': 'application/json',
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(bodyParams),
-    });
-    
-    const result = await response.json();
-    const text = result.message; // Assuming the API response format includes 'message' field
-    setChanged(true);
-    return text;
+      });
+
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+
+      const result = await response.json();
+      const text = result.message;
+      setChanged(true);
+      return text;
+    } catch (error) {
+      console.error("API call failed:", error);
+      throw error;  // Propagate the error to handleEnter for setting the error message
+    }
   }
 
   const [prevData, setPrevData] = useState([
@@ -81,25 +96,25 @@ const page = () => {
   ]);
 
   return (
-    <div className="flex min-h-screen justify-between p-24">
-      <div className="flex w-1/2 flex-col">
-        <div className="text-2xl mb-4">Previous conversations</div>
+    <div className="flex flex-col md:flex-row min-h-screen justify-between p-6 md:p-24">
+      <div className="flex w-full md:w-1/2 flex-col mb-8 md:mb-0">
+        <div className="text-xl md:text-2xl mb-4 text-center md:text-left">Previous conversations</div>
         <div className="flex flex-col gap-4">
           {prevData.map((data, index) => (
             <div
               key={index}
-              className="flex justify-between p-6 rounded-xl border-2 border-slate-800 cursor-pointer"
+              className="flex justify-between p-4 md:p-6 rounded-xl border-2 border-slate-800 cursor-pointer"
               onClick={() => setMessageData(data)}
             >
-              <div>{data[0].message}</div>
+              <div className="truncate">{data[0].message}</div>
               <ArrowRight size={16} />
             </div>
           ))}
         </div>
       </div>
-      <div className="flex flex-col w-1/2 relative">
-        <div className="ml-4 h-full border-2 rounded-md relative">
-          <div className="p-4 text-xl flex gap-4 items-center absolute w-full">
+      <div className="flex flex-col w-full md:w-1/2 relative">
+        <div className="ml-0 md:ml-4 h-full border-2 rounded-md relative">
+          <div className="p-4 flex gap-4 items-center absolute w-full bg-white md:bg-transparent">
             <RefreshCcw
               onClick={() => {
                 if (changed) setPrevData((prevData) => [...prevData, messageData]);
@@ -107,9 +122,9 @@ const page = () => {
               }}
               size={16}
             />
-            <div>ChatBot</div>
+            <div className="text-center md:text-left">ChatBot</div>
           </div>
-          <div className="p-4 pr-0 justify-end flex flex-col my-12 h-xlg">
+          <div className="p-4 pr-0 flex flex-col my-12 h-xlg overflow-hidden">
             <div className="overflow-auto pr-2">
               {messageData.length > 0 ? (
                 messageData.map((e: any, i: number) =>
@@ -124,14 +139,16 @@ const page = () => {
                   Start chatting here!!
                 </div>
               )}
-              {/* Show typing indicator */}
               {isTyping && (
                 <div className="text-slate-500 italic">Typing...</div>
+              )}
+              {errorMessage && (
+                <div className="text-center text-red-500 mt-4">{errorMessage}</div>
               )}
             </div>
           </div>
           <div className="absolute bottom-0 w-full">
-            <div className="relative">
+            <div className="relative flex flex-col sm:flex-row items-center">
               <input
                 type="text"
                 onKeyDown={(e) => {
@@ -150,9 +167,8 @@ const page = () => {
                 onChange={(e) => setLanguage(e.target.value)}
               >
                 <option value="English">English</option>
-                <option value="Spanish">Hindi</option>
-                <option value="French">Kannada</option>
-                {/* Add more language options as needed */}
+                <option value="Hindi">Hindi</option>
+                <option value="Kannada">Kannada</option>
               </select>
               <button
                 className="absolute right-2 top-1 z-50 bg-slate-900 rounded-xl p-4"

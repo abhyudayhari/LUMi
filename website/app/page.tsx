@@ -24,14 +24,10 @@ export default function Home() {
     const fetchCallStatus = async () => {
       try {
         const response = await fetch("/api/call");
-        console.log("API Call made to check call status");
         if (!response.ok) {
           throw new Error("Network response was not ok");
         }
         const data = await response.json();
-        console.log("API Call response", data);
-        console.log("Is Message", data.isChatMessage);
-        console.log("Message is", data.chatMessage);
         setIsAIResponse(data.isAIResponse);
         if (data.isChatMessage) {
           setMessageData((prevData: any) => [...prevData, data.chatMessage]);
@@ -62,7 +58,6 @@ export default function Home() {
         return { data: doc.data(), docId: doc.id };
       });
       setPrevCallsData(callsData);
-      console.log(callsData);
     } catch (error) {
       console.error("Error fetching calls data:", error);
     }
@@ -75,12 +70,12 @@ export default function Home() {
     setCurrHistory([]);
   };
   return (
-    <main className="flex min-h-screen justify-between p-24">
+    <main className="flex flex-col md:flex-row min-h-screen justify-between p-6 md:p-24">
       {currHistory.data && (
-        <div className="absolute h-screen w-screen top-0 bottom-0 left-0 right-0 bg-black z-40 mt-16 p-12 overflow-x-hidden">
-          <div className="flex text-xl justify-between mb-4">
-            <div className="flex gap-4">
-              <div onClick={clearHistory}>
+        <div className="fixed inset-0 bg-black z-40 p-4 md:p-12 overflow-y-auto">
+          <div className="flex flex-col md:flex-row text-lg md:text-xl justify-between mb-4 text-white">
+            <div className="flex items-center gap-4 mb-4 md:mb-0">
+              <div onClick={clearHistory} className="cursor-pointer">
                 <ArrowLeftCircle />
               </div>
               Transcription History
@@ -98,13 +93,12 @@ export default function Home() {
           </div>
         </div>
       )}
-      <div className="flex w-1/2 flex-col justify-between">
+      <div className="flex flex-col w-full md:w-1/2 justify-between mb-8 md:mb-0">
         <div
-          className="height-50 text-4xl h-1/2 text-center flex flex-col items-center justify-center gap-4"
+          className="h-40 md:h-1/2 text-2xl md:text-4xl text-center flex flex-col items-center justify-center gap-4"
           onClick={async () => {
             setCallStatus("Call Ended");
             const dateAndTimeNow = new Date().toLocaleString();
-            //replace the / with - in the date
             const dateAndTimeNowFormatted = dateAndTimeNow.replace(/\//g, "-");
 
             try {
@@ -122,14 +116,14 @@ export default function Home() {
         >
           {callStatus === "Call Ongoing" ? (
             <div className="p-4 glow-icon rounded-full">
-              <Mic className="" size={64} />
+              <Mic size={64} />
             </div>
           ) : null}
           {callStatus}
         </div>
-        <div className="height-50 overflow-auto">
-          <div className="mb-2 text-xl">Previous calls</div>
-          <div className="">
+        <div className="h-40 md:h-auto overflow-auto">
+          <div className="mb-2 text-lg md:text-xl">Previous calls</div>
+          <div>
             <div className="flex flex-col gap-4">
               {prevCallsData.map((data: any, index: number) => {
                 return (
@@ -137,12 +131,11 @@ export default function Home() {
                     key={index}
                     onClick={() => {
                       setCurrHistory(data);
-                      console.log(data);
                     }}
-                    className="flex justify-between items-center border-2 border-slate-800 rounded-md p-4"
+                    className="flex justify-between items-center border-2 border-slate-800 rounded-md p-4 cursor-pointer"
                   >
-                    <div className="">{data.docId}</div>
-                    <ArrowRight size={16} className=" cursor-pointer" />
+                    <div>{data.docId}</div>
+                    <ArrowRight size={16} className="cursor-pointer" />
                   </div>
                 );
               })}
@@ -150,10 +143,10 @@ export default function Home() {
           </div>
         </div>
       </div>
-      <div className="flex flex-col w-1/2 relative">
-        <div className="ml-4 h-full border-2 rounded-md">
-          <div className="p-4 text-xl absolute w-full">Live transcription</div>
-          <div className="p-4 pr-0 justify-end flex flex-col mt-12 h-xxlg">
+      <div className="flex flex-col w-full md:w-1/2 relative">
+        <div className="h-full border-2 rounded-md">
+          <div className="p-4 text-lg md:text-xl w-full">Live transcription</div>
+          <div className="p-4 pr-0 flex flex-col justify-end mt-12 h-[400px] md:h-xxlg">
             <div className="overflow-auto pr-2">
               {messageData.length > 0 ? (
                 messageData.map((e: string, i: number) =>
