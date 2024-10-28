@@ -3,37 +3,66 @@ import Chat from "@/components/Chat";
 import ResponseChat from "@/components/ResponseChat";
 import { ArrowRight, RefreshCcw, SendIcon } from "lucide-react";
 import { useState } from "react";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const genAI = new GoogleGenerativeAI("YOUR_API_KEY");
+const bookingID = "03c8788c-b569-49b1-aa91-396d87433057";
 
 const page = () => {
   const [messageData, setMessageData] = useState<any>([]);
   const [inputMsg, setInputMsg] = useState("");
   const [changed, setChanged] = useState(false);
-  const handleEnter = () => {
-    const restext = run(inputMsg);
+  const [language, setLanguage] = useState("English");
+  const [isTyping, setIsTyping] = useState(false); // For showing typing animation
+
+  const handleEnter = async () => {
+    if (!inputMsg.trim()) return; // Prevent sending empty messages
+
+    // Show user's message immediately
     setMessageData((prevData: any) => [
       ...prevData,
       { message: inputMsg, sender: "user" },
+    ]);
+
+    setInputMsg(""); // Clear the input field
+
+    // Show typing indicator
+    setIsTyping(true);
+
+    // Fetch the response
+    const restext = await run(inputMsg);
+
+    // Remove typing indicator and display bot's response
+    setMessageData((prevData: any) => [
+      ...prevData,
       { message: restext, sender: "agent" },
     ]);
-    setInputMsg("");
+    setIsTyping(false);
   };
+
   async function run(inputMsg: string) {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-    const prompt = `Please act as a personal assistant who helps users with their problems. Respond to queries with clear, concise, and helpful information, providing step-by-step guidance when necessary. Be polite, professional, and empathetic in your tone. Assist with a variety of topics, including technical issues, travel planning, project advice, and more, ensuring the user's needs are met efficiently.
+    const apiUrl = `http://34.19.70.196:5000/api/whatsapp_api/`;
     
-    User:${inputMsg}
-    AI:`;
+    const bodyParams = {
+        booking_id: bookingID,
+        user_input: inputMsg,
+        language: language,
+        streaming: false,
+    };
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+            'accept': 'application/json',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(bodyParams),
+    });
+    
+    const result = await response.json();
+    const text = result.message; // Assuming the API response format includes 'message' field
     setChanged(true);
     return text;
   }
+
   const [prevData, setPrevData] = useState([
     [
       { message: "Hello", sender: "user" },
@@ -50,6 +79,7 @@ const page = () => {
       { message: "I am here to help you", sender: "agent" },
     ],
   ]);
+
   return (
     <div className="flex min-h-screen justify-between p-24">
       <div className="flex w-1/2 flex-col">
@@ -69,11 +99,10 @@ const page = () => {
       </div>
       <div className="flex flex-col w-1/2 relative">
         <div className="ml-4 h-full border-2 rounded-md relative">
-          <div className="p-4 text-xl flex gap-4 item-center absolute w-full">
+          <div className="p-4 text-xl flex gap-4 items-center absolute w-full">
             <RefreshCcw
               onClick={() => {
-                if (changed)
-                  setPrevData((prevData) => [...prevData, messageData]);
+                if (changed) setPrevData((prevData) => [...prevData, messageData]);
                 setMessageData([]);
               }}
               size={16}
@@ -95,6 +124,10 @@ const page = () => {
                   Start chatting here!!
                 </div>
               )}
+              {/* Show typing indicator */}
+              {isTyping && (
+                <div className="text-slate-500 italic">Typing...</div>
+              )}
             </div>
           </div>
           <div className="absolute bottom-0 w-full">
@@ -111,6 +144,16 @@ const page = () => {
                 className="w-full p-4 border-t-2 border-gray-300 text-slate-950"
                 placeholder="Type your message here"
               />
+              <select
+                className="absolute right-24 top-1 z-50 bg-slate-900 rounded-xl p-2 text-white"
+                value={language}
+                onChange={(e) => setLanguage(e.target.value)}
+              >
+                <option value="English">English</option>
+                <option value="Spanish">Hindi</option>
+                <option value="French">Kannada</option>
+                {/* Add more language options as needed */}
+              </select>
               <button
                 className="absolute right-2 top-1 z-50 bg-slate-900 rounded-xl p-4"
                 onClick={handleEnter}
