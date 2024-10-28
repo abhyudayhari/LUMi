@@ -45,7 +45,8 @@ const page = () => {
   };
 
   async function run(inputMsg: string) {
-    const apiUrl = `http://34.19.70.196:5000/api/whatsapp_api/`;
+    const apiUrl = `http://34.19.101.149:5000/api/whatsapp_api/`;
+    
     
     const bodyParams = {
       booking_id: bookingID,
