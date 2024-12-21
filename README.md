@@ -120,3 +120,17 @@ To test the application locally, run the components as follows:
 
 3. **Load Testing**
    - Evaluate the bot’s response time and reliability under varying load conditions.
+
+## CONTRIBUTING
+
+We welcome contributions to this project! If you'd like to contribute, follow these steps:
+
+1. Fork the repository.
+2. Clone your forked repository to your local machine.
+3. Create a new branch for your feature or fix.
+4. Make your changes and commit them with descriptive messages.
+5. Push your changes to your forked repository.
+6. Create a pull request to the main repository.
+
+## LICENSE
+This project is licensed under the MIT License
